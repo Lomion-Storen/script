@@ -412,7 +412,7 @@ chmod +x /usr/local/bin/check-input-lag.sh
 # 18) Thermal Management (Lüfter, Undervolting)
 # -------------------------
 echo "[18/19] Thermal Management (Fan-Curves, Temp-Monitoring)..."
-apt install -y lm-sensors hddtemp psensor || true
+apt install -y lm-sensors psensor smartmontools nvme-cli || true
 sensors-detect --auto || true
 
 if command -v nvidia-smi >/dev/null 2>&1; then
