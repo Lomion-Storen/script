@@ -48,44 +48,36 @@ fi
 # -------------------------
 # 1) Basis-Update + Tools
 # -------------------------
-echo "[1/19] Systemupdate und Basis-Tools..."
+echo "[1/18] Systemupdate und Basis-Tools..."
 apt update
 apt upgrade -y
 
 # -------------------------
-# 2) Liquorix Gaming Kernel
+# 2) GPU / Vulkan / Mesa / Microcode
 # -------------------------
-echo "[2/19] Liquorix Kernel (Gaming) installieren..."
-add-apt-repository -y ppa:damentz/liquorix
-apt update
-apt install -y linux-image-liquorix-amd64 linux-headers-liquorix-amd64 || true
-
-# -------------------------
-# 3) GPU / Vulkan / Mesa / Microcode
-# -------------------------
-echo "[3/19] GPU & Vulkan & Microcode..."
+echo "[2/18] GPU & Vulkan & Microcode..."
 apt install -y mesa-vulkan-drivers mesa-vulkan-drivers:i386 vulkan-tools vulkan-validationlayers libvulkan1 libvulkan1:i386 || true
 
 if lspci | grep -i -E "nvidia|geforce" >/dev/null 2>&1; then
   echo "-> NVIDIA GPU erkannt: Installiere NVIDIA Treiber (stabiles Release)..."
-  apt install -y nvidia-driver-550 nvidia-settings || apt install -y nvidia-driver-535 nvidia-settings || true
+  apt install -y nvidia-driver-550 nvidia-settings nvidia-driver-libs:i386 || apt install -y nvidia-driver-535 nvidia-settings nvidia-driver-libs:i386 || true
 fi
 
 # Eventuell mit dem Befehl "ubuntu-drivers devices" die empfohlene Version prüfen.
 
 # -------------------------
-# 4) Gaming-Software
+# 3) Gaming-Software
 # -------------------------
-echo "[4/19] Steam, Lutris, Heroic, ProtonUp-Qt, MangoHUD etc..."
+echo "[3/18] Steam, Lutris, Heroic, ProtonUp-Qt, MangoHUD etc..."
 apt install -y steam lutris gamemode libgamemode0 cpufrequtils mesa-utils libgl1-mesa-dri || true
 flatpak install -y flathub com.heroicgameslauncher.hgl || true
 flatpak install -y flathub net.davidotek.pupgui2 || true
 apt install -y mangohud vkbasalt || true
 
 # -------------------------
-# 5) ZRAM (compressed swap)
+# 4) ZRAM (compressed swap)
 # -------------------------
-echo "[5/19] ZRAM (zram-tools) installieren und konfigurieren..."
+echo "[4/18] ZRAM (zram-tools) installieren und konfigurieren..."
 apt install -y zram-tools || true
 if [ -f /etc/default/zramswap ]; then
   backup_file /etc/default/zramswap
@@ -94,9 +86,9 @@ if [ -f /etc/default/zramswap ]; then
 fi
 
 # -------------------------
-# 6) I/O & Scheduler Optimierung (udev rule)
+# 5) I/O & Scheduler Optimierung (udev rule)
 # -------------------------
-echo "[6/14] I/O Scheduler & NVMe-Tuning..."
+echo "[5/18] I/O Scheduler & NVMe-Tuning..."
 cat > /etc/udev/rules.d/60-io-scheduler.rules <<'EOF'
 # Set optimal scheduler for NVMe / SSDs on modern kernels (use mq-deadline)
 ACTION=="add|change", KERNEL=="nvme[0-9]*", ATTR{queue/scheduler}="mq-deadline"
@@ -104,9 +96,9 @@ ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/scheduler}="mq-deadline"
 EOF
 
 # -------------------------
-# 7) Sysctl (aggressive) - Netzwerk, VM, Scheduler, IO
+# 6) Sysctl (aggressive) - Netzwerk, VM, Scheduler, IO
 # -------------------------
-echo "[7/19] Sysctl-Tuning (aggressiv)..."
+echo "[6/18] Sysctl-Tuning (aggressiv)..."
 cat > /etc/sysctl.d/99-anduin-ultra.conf <<'EOF'
 # VM tuning
 vm.swappiness=1
@@ -152,9 +144,9 @@ else
 fi
 
 # -------------------------
-# 8) CPU Governor / Performance
+# 7) CPU Governor / Performance
 # -------------------------
-echo "[8/19] CPU Governor: performance setzen und Turbo-Modus forcing..."
+echo "[7/18] CPU Governor: performance setzen und Turbo-Modus forcing..."
 
 # Install cpufrequtils falls nicht vorhanden
 apt install -y cpufrequtils || true
@@ -177,9 +169,9 @@ if command -v x86_energy_perf_policy >/dev/null 2>&1; then
 fi
 
 # -------------------------
-# 9) NVIDIA runtime tweaks (falls NVIDIA vorhanden)
+# 8) NVIDIA runtime tweaks (falls NVIDIA vorhanden)
 # -------------------------
-echo "[9/19] NVIDIA Runtime Optimierungen (falls vorhanden)..."
+echo "[8/18] NVIDIA Runtime Optimierungen (falls vorhanden)..."
 if command -v nvidia-smi >/dev/null 2>&1; then
   echo "Aktiviere Persistence Mode..."
   nvidia-smi -pm 1 || true
@@ -190,9 +182,9 @@ if command -v nvidia-smi >/dev/null 2>&1; then
 fi
 
 # -------------------------
-# 10) Disable power-savers (Ultra Aggressive)
+# 9) Disable power-savers (Ultra Aggressive)
 # -------------------------
-echo "[10/19] Deaktiviere aggressive Power-Saver Dienste (tlp, laptop-mode, sleep)..."
+echo "[9/18] Deaktiviere aggressive Power-Saver Dienste (tlp, laptop-mode, sleep)..."
 systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target || true
 if systemctl list-unit-files | grep -q tlp; then
   systemctl mask --now tlp || true
@@ -202,9 +194,9 @@ if systemctl list-unit-files | grep -q thermald; then
 fi
 
 # -------------------------
-# 11) GNOME / Compositor handling (attempt)
+# 10) GNOME / Compositor handling (attempt)
 # -------------------------
-echo "[11/19] Compositor/Display-Server Optimierung..."
+echo "[10/18] Compositor/Display-Server Optimierung..."
 # Wenn GNOME (gnome-shell) detected: install xdg-desktop-portal-wlr? best effort
 if pidof gnome-shell >/dev/null 2>&1; then
   # Warnung: killing gnome-shell kann instability erzeugen; wir legen stattdessen eine helper service an
@@ -212,9 +204,9 @@ if pidof gnome-shell >/dev/null 2>&1; then
 fi
 
 # -------------------------
-# 12) Gamemode hooks + systemd service um tweaks on-demand zu setzen
+# 11) Gamemode hooks + systemd service um tweaks on-demand zu setzen
 # -------------------------
-echo "[12/19] Erstelle runtime tweak script und systemd service..."
+echo "[11/18] Erstelle runtime tweak script und systemd service..."
 cat > /usr/local/bin/anduin-ultra-runtime-tweaks.sh <<'EOF'
 #!/usr/bin/env bash
 # Runtime tweaks executed on-demand or at boot to set priorities for gaming
@@ -247,9 +239,9 @@ systemctl daemon-reload
 systemctl enable --now anduin-ultra-runtime.service || true
 
 # -------------------------
-# 13) Optional: disable unnecessary services that may cause stutters
+# 12) Optional: disable unnecessary services that may cause stutters
 # -------------------------
-echo "[13/19] Optional: Deaktiviere Avahi/ModemManager/BlueZ falls nicht benötigt..."
+echo "[12/18] Optional: Deaktiviere Avahi/ModemManager/BlueZ falls nicht benötigt..."
 if systemctl is-enabled avahi-daemon >/dev/null 2>&1; then
   systemctl disable --now avahi-daemon || true
 fi
@@ -261,9 +253,9 @@ fi
 
 
 # -------------------------
-# 14) Swappiness & Memory (erweitert)
+# 13) Swappiness & Memory (erweitert)
 # -------------------------
-echo "[14/19] Swappiness & Memory Tuning..."
+echo "[13/18] Swappiness & Memory Tuning..."
 
 # Zusätzlich zu vm.swappiness in sysctl:
 cat >> /etc/sysctl.d/99-anduin-ultra.conf <<'EOF'
@@ -311,9 +303,9 @@ systemctl daemon-reload
 systemctl enable --now hugepage-tweak.service || true
 
 # -------------------------
-# 15) Latency-Reduzierung (Real-Time Priority)
+# 14) Latency-Reduzierung (Real-Time Priority)
 # -------------------------
-echo "[15/19] Latency-Reduzierung (rt-Priority, CONFIG_PREEMPT)..."
+echo "[14/18] Latency-Reduzierung (rt-Priority, CONFIG_PREEMPT)..."
 apt install -y rtkit || true
 
 # Limit config für real-time Priority
@@ -337,9 +329,9 @@ EOF
 sysctl --system || true
 
 # -------------------------
-# 16) Audio-Optimierung (PipeWire, Low-Latency)
+# 15) Audio-Optimierung (PipeWire, Low-Latency)
 # -------------------------
-echo "[16/19] Audio: PipeWire + Low-Latency Konfiguration..."
+echo "[15/18] Audio: PipeWire + Low-Latency Konfiguration..."
 apt install -y pipewire pipewire-alsa pipewire-pulse pipewire-jack || true
 apt remove -y pulseaudio pulseaudio-utils 2>/dev/null || true
 
@@ -364,9 +356,9 @@ EOF
 fi
 
 # -------------------------
-# 17) Input-Lag Reduzierung (USB Polling, Keyboard/Mouse)
+# 16) Input-Lag Reduzierung (USB Polling, Keyboard/Mouse)
 # -------------------------
-echo "[17/19] Input-Lag Reduzierung (sichere udev helper)..."
+echo "[16/18] Input-Lag Reduzierung (sichere udev helper)..."
 
 # Create a short helper script that udev can call (must be quick)
 cat > /usr/local/bin/anduin-set-usb-polling.sh <<'EOF'
@@ -409,9 +401,9 @@ EOF
 chmod +x /usr/local/bin/check-input-lag.sh
 
 # -------------------------
-# 18) Thermal Management (Lüfter, Undervolting)
+# 17) Thermal Management (Lüfter, Undervolting)
 # -------------------------
-echo "[18/19] Thermal Management (Fan-Curves, Temp-Monitoring)..."
+echo "[17/18] Thermal Management (Fan-Curves, Temp-Monitoring)..."
 apt install -y lm-sensors psensor smartmontools nvme-cli || true
 sensors-detect --auto || true
 
@@ -457,9 +449,9 @@ EOF
 chmod +x /usr/local/bin/monitor-temps.sh
 
 # -------------------------
-# 19) Gaming-Launcher Optimierungen (Steam, Lutris, env-vars)
+# 18) Gaming-Launcher Optimierungen (Steam, Lutris, env-vars)
 # -------------------------
-echo "[19/19] Gaming-Launcher Optimierungen..."
+echo "[18/18] Gaming-Launcher Optimierungen..."
 cat > /etc/profile.d/steam-gaming-tweaks.sh <<'EOF'
 # Steam / Proton Gaming Tweaks
 export STEAM_CPU_CGROUP_PERFORMANCE=1
